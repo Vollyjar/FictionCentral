@@ -162,6 +162,10 @@ class SearchPage(ctk.CTkFrame):
             self, fg_color=COLORS["bg_content"], corner_radius=0,
         )
         self._results_frame.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        try:
+            self._results_frame._parent_canvas.configure(yscrollincrement=8)
+        except Exception:
+            pass
 
     # ──────────────────────────────────────────
     # Direct Link Search logic
@@ -332,18 +336,15 @@ class SearchPage(ctk.CTkFrame):
 
     def _create_result_card(self, result) -> None:
         """Create a single result card in the results frame."""
-        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"],
-                            corner_radius=10, height=130)
+        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"], corner_radius=10)
         card.pack(fill="x", padx=4, pady=4)
-        card.pack_propagate(False)
 
-        # Inner layout
-        inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        card.grid_columnconfigure(0, weight=1)
+        card.grid_columnconfigure(1, weight=0)
 
-        # Left: text info
-        text_frame = ctk.CTkFrame(inner, fg_color="transparent")
-        text_frame.pack(side="left", fill="both", expand=True)
+        # Left Column: text info
+        text_frame = ctk.CTkFrame(card, fg_color="transparent")
+        text_frame.grid(row=0, column=0, sticky="nsew", padx=(PADDING, 8), pady=PADDING)
 
         ctk.CTkLabel(
             text_frame,
@@ -378,9 +379,9 @@ class SearchPage(ctk.CTkFrame):
                 anchor="w",
             ).pack(anchor="w", pady=(4, 0))
 
-        # Right: action buttons
-        btn_frame = ctk.CTkFrame(inner, fg_color="transparent")
-        btn_frame.pack(side="right", padx=(PADDING, 0))
+        # Right Column: action buttons
+        btn_frame = ctk.CTkFrame(card, fg_color="transparent")
+        btn_frame.grid(row=0, column=1, sticky="e", padx=(0, PADDING), pady=PADDING)
 
         ctk.CTkButton(
             btn_frame, text="Details", font=FONTS["button"], width=110,

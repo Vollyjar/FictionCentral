@@ -51,6 +51,7 @@ class Novel(Base):
     # Relationships
     chapters = relationship("Chapter", back_populates="novel", cascade="all, delete-orphan")
     progress = relationship("ReadingProgress", back_populates="novel", uselist=False, cascade="all, delete-orphan")
+    queue_item = relationship("DownloadQueueItem", back_populates="novel", uselist=False, cascade="all, delete-orphan")
 
     # ── Convenience properties ──
     @property
@@ -141,3 +142,27 @@ class SearchCache(Base):
 
     def __repr__(self) -> str:
         return f"<SearchCache(query={self.query!r}, site={self.site})>"
+
+
+# ──────────────────────────────────────────────
+# Persistent Download Queue
+# ──────────────────────────────────────────────
+class DownloadQueueItem(Base):
+    __tablename__ = "download_queue"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    novel_id = Column(Integer, ForeignKey("novels.id", ondelete="CASCADE"), nullable=False, unique=True)
+    status = Column(String(50), default="QUEUED")
+    error_message = Column(Text, default="")
+    enqueued_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    novel = relationship("Novel", back_populates="queue_item")
+
+    def __repr__(self) -> str:
+        return f"<DownloadQueueItem(novel_id={self.novel_id}, status={self.status!r})>"

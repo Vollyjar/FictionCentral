@@ -40,6 +40,23 @@ class DownloadsPage(ctk.CTkFrame):
             text_color=COLORS["fg_primary"],
         ).pack(side="left")
 
+        # Header action buttons
+        btn_box = ctk.CTkFrame(header, fg_color="transparent")
+        btn_box.pack(side="right")
+
+        ctk.CTkButton(
+            btn_box, text="▶️ Resume All", font=FONTS["button"], width=100,
+            height=32, corner_radius=8, fg_color=COLORS["success"],
+            command=self._on_resume_all,
+        ).pack(side="left", padx=(0, 8))
+
+        ctk.CTkButton(
+            btn_box, text="🧹 Clear Finished", font=FONTS["button"], width=110,
+            height=32, corner_radius=8, fg_color=COLORS["bg_sidebar"],
+            hover_color=COLORS["bg_card"],
+            command=self._on_clear_finished,
+        ).pack(side="left")
+
         # Status
         self._status = ctk.CTkLabel(
             self,
@@ -52,15 +69,48 @@ class DownloadsPage(ctk.CTkFrame):
         # Scrollable download list
         self._list_frame = ctk.CTkScrollableFrame(self, fg_color=COLORS["bg_content"])
         self._list_frame.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        try:
+            self._list_frame._parent_canvas.configure(yscrollincrement=8)
+        except Exception:
+            pass
 
     def on_show(self) -> None:
         """Refresh the download list when page is shown."""
         self._refresh()
 
+    def _on_clear_finished(self) -> None:
+        self.app.download_engine.clear_completed()
+        self._job_widgets.clear()
+        for w in self._list_frame.winfo_children():
+            w.destroy()
+        self._refresh()
+
+    def _on_resume_all(self) -> None:
+        queue = self.app.download_engine.get_queue()
+        for job in queue:
+            if job.status in (DownloadStatus.PAUSED, DownloadStatus.FAILED):
+                self.app.download_engine.resume(job.novel_id)
+        # Also trigger persistent queue restore in case of any un-enqueued DB items
+        self.app.download_engine.restore_persistent_queue()
+        self._refresh()
+
     def _refresh(self) -> None:
         queue = self.app.download_engine.get_queue()
         if not queue:
-            self._status.configure(text="No downloads in queue.")
+            # Check DB to see if any are in persistent queue
+            from database.db import get_session
+            from database.models import DownloadQueueItem
+            with get_session() as session:
+                pending_count = (
+                    session.query(DownloadQueueItem)
+                    .filter(DownloadQueueItem.status.in_(["QUEUED", "DOWNLOADING"]))
+                    .count()
+                )
+            if pending_count > 0:
+                self._status.configure(text=f"Restoring {pending_count} download(s) from persistent queue…")
+                self.app.download_engine.restore_persistent_queue()
+            else:
+                self._status.configure(text="No downloads in queue.")
             return
 
         active = sum(1 for j in queue if j.status in (DownloadStatus.DOWNLOADING, DownloadStatus.QUEUED))
@@ -89,17 +139,16 @@ class DownloadsPage(ctk.CTkFrame):
             self._update_action_buttons(widgets["btn_frame"], job)
 
     def _create_job_widget(self, job: DownloadJob) -> None:
-        card = ctk.CTkFrame(self._list_frame, fg_color=COLORS["bg_card"],
-                            corner_radius=10, height=105)
+        # Flat card without nested transparent frames to eliminate horizontal layer tearing
+        card = ctk.CTkFrame(self._list_frame, fg_color=COLORS["bg_card"], corner_radius=10)
         card.pack(fill="x", padx=4, pady=4)
-        card.pack_propagate(False)
 
-        inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        card.grid_columnconfigure(0, weight=1)
+        card.grid_columnconfigure(1, weight=0)
 
-        # Left: info
-        info = ctk.CTkFrame(inner, fg_color="transparent")
-        info.pack(side="left", fill="both", expand=True)
+        # Left Column: info & progress bar
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="nsew", padx=(PADDING, 8), pady=PADDING)
 
         ctk.CTkLabel(
             info, text=job.novel_title, font=FONTS["subheading"],
@@ -120,30 +169,30 @@ class DownloadsPage(ctk.CTkFrame):
         current_label.pack(anchor="w")
 
         # Progress
-        progress_frame = ctk.CTkFrame(info, fg_color="transparent")
-        progress_frame.pack(fill="x", pady=(4, 0))
+        p_row = ctk.CTkFrame(info, fg_color="transparent")
+        p_row.pack(fill="x", pady=(4, 0))
 
         total = max(job.total_chapters, 1)
         pct = job.downloaded_count / total
 
         progress_bar = ctk.CTkProgressBar(
-            progress_frame, width=300, height=10,
+            p_row, width=280, height=8,
             progress_color=COLORS["accent"]
         )
         progress_bar.set(pct)
         progress_bar.pack(side="left", padx=(0, 8))
 
         progress_label = ctk.CTkLabel(
-            progress_frame,
+            p_row,
             text=f"{job.downloaded_count}/{job.total_chapters} chapters",
             font=FONTS["body_small"],
             text_color=COLORS["fg_muted"]
         )
         progress_label.pack(side="left")
 
-        # Right: action buttons
-        btn_frame = ctk.CTkFrame(inner, fg_color="transparent")
-        btn_frame.pack(side="right")
+        # Right Column: action buttons
+        btn_frame = ctk.CTkFrame(card, fg_color="transparent")
+        btn_frame.grid(row=0, column=1, sticky="e", padx=(0, PADDING), pady=PADDING)
         self._update_action_buttons(btn_frame, job)
 
         self._job_widgets[job.novel_id] = {

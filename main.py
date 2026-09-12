@@ -27,8 +27,9 @@ def main() -> None:
     init_db()
     logger.info("Database initialised")
 
-    # Download engine
+    # Download engine with automatic persistent queue recovery
     engine = DownloadEngine()
+    engine.restore_persistent_queue()
 
     # GUI
     app = App(download_engine=engine)

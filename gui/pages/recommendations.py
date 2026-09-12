@@ -102,6 +102,10 @@ class RecommendationsPage(ctk.CTkFrame):
         # Results
         self._results_frame = ctk.CTkScrollableFrame(self, fg_color=COLORS["bg_content"])
         self._results_frame.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        try:
+            self._results_frame._parent_canvas.configure(yscrollincrement=8)
+        except Exception:
+            pass
 
     def _on_genre_toggle(self) -> None:
         self._selected_genres = {g for g, var in self._genre_vars.items() if var.get()}
@@ -180,16 +184,17 @@ class RecommendationsPage(ctk.CTkFrame):
             self._create_search_result_card(r)
 
     def _create_recommendation_card(self, novel: Novel) -> None:
-        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"],
-                            corner_radius=10, height=90)
+        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"], corner_radius=10)
         card.pack(fill="x", padx=4, pady=4)
-        card.pack_propagate(False)
 
-        inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        card.grid_columnconfigure(0, weight=1)
+        card.grid_columnconfigure(1, weight=0)
+
+        left_box = ctk.CTkFrame(card, fg_color="transparent")
+        left_box.grid(row=0, column=0, sticky="nsew", padx=(PADDING, 8), pady=PADDING)
 
         ctk.CTkLabel(
-            inner,
+            left_box,
             text=novel.title,
             font=FONTS["subheading"],
             text_color=COLORS["fg_primary"],
@@ -198,7 +203,7 @@ class RecommendationsPage(ctk.CTkFrame):
         genres_str = ", ".join(novel.genres[:4])
         info = f"by {novel.author}  •  {novel.source_site}  •  {genres_str}"
         ctk.CTkLabel(
-            inner,
+            left_box,
             text=info,
             font=FONTS["body_small"],
             text_color=COLORS["fg_secondary"],
@@ -206,26 +211,28 @@ class RecommendationsPage(ctk.CTkFrame):
         ).pack(anchor="w")
 
         ctk.CTkButton(
-            inner,
+            card,
             text="Read",
             font=FONTS["button"],
-            width=60,
+            width=65,
+            height=28,
             corner_radius=6,
             fg_color=COLORS["accent"],
             command=lambda nid=novel.id: self.app.open_reader(nid),
-        ).pack(side="right")
+        ).grid(row=0, column=1, sticky="e", padx=(0, PADDING), pady=PADDING)
 
     def _create_search_result_card(self, result) -> None:
-        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"],
-                            corner_radius=10, height=90)
+        card = ctk.CTkFrame(self._results_frame, fg_color=COLORS["bg_card"], corner_radius=10)
         card.pack(fill="x", padx=4, pady=4)
-        card.pack_propagate(False)
 
-        inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=PADDING, pady=PADDING)
+        card.grid_columnconfigure(0, weight=1)
+        card.grid_columnconfigure(1, weight=0)
+
+        left_box = ctk.CTkFrame(card, fg_color="transparent")
+        left_box.grid(row=0, column=0, sticky="nsew", padx=(PADDING, 8), pady=PADDING)
 
         ctk.CTkLabel(
-            inner,
+            left_box,
             text=result.title,
             font=FONTS["subheading"],
             text_color=COLORS["fg_primary"],
@@ -235,7 +242,7 @@ class RecommendationsPage(ctk.CTkFrame):
         if result.genres:
             info += f"  •  {', '.join(result.genres[:3])}"
         ctk.CTkLabel(
-            inner,
+            left_box,
             text=info,
             font=FONTS["body_small"],
             text_color=COLORS["fg_secondary"],
@@ -243,14 +250,15 @@ class RecommendationsPage(ctk.CTkFrame):
         ).pack(anchor="w")
 
         ctk.CTkButton(
-            inner,
+            card,
             text="Add to Library",
             font=FONTS["button"],
             width=110,
+            height=28,
             corner_radius=6,
             fg_color=COLORS["success"],
             command=lambda r=result: self._add_result(r),
-        ).pack(side="right")
+        ).grid(row=0, column=1, sticky="e", padx=(0, PADDING), pady=PADDING)
 
     def _add_result(self, result) -> None:
         from database.models import Novel as NovelModel

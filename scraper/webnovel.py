@@ -732,11 +732,7 @@ class WebnovelScraper(BaseScraper):
                     ).strip()
                     ch_name = re.sub(r"\s+", " ", ch_name).strip()
 
-                    num_match = re.search(r"(?:chapter|ch\.?)\s*(\d+)", ch_name, re.IGNORECASE)
-                    if num_match:
-                        ch_num = int(num_match.group(1))
-                    else:
-                        ch_num = len(chapters) + 1
+                    ch_num = len(chapters) + 1
 
                     chapters.append(
                         ChapterInfo(
@@ -791,11 +787,7 @@ class WebnovelScraper(BaseScraper):
                 or f"Chapter {idx}"
             ).strip()
 
-            ch_idx = item.get("chapterIndex")
-            try:
-                ch_num = int(ch_idx) if ch_idx is not None else len(chapters) + 1
-            except (ValueError, TypeError):
-                ch_num = len(chapters) + 1
+            ch_num = len(chapters) + 1
 
             ch_url = f"{self.base_url}/book/{book_id}/{ch_id}"
             chapters.append(
