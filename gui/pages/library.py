@@ -247,9 +247,12 @@ class LibraryPage(ctk.CTkFrame):
         threading.Thread(target=worker, daemon=True).start()
 
     def _remove_novel(self, novel_id: int) -> None:
+        self.app.download_engine.cancel(novel_id)
+        from database.models import DownloadQueueItem
         with get_session() as session:
             novel = session.get(Novel, novel_id)
             if novel:
                 novel.is_in_library = False
+                session.query(DownloadQueueItem).filter_by(novel_id=novel_id).delete()
                 session.commit()
         self._refresh()

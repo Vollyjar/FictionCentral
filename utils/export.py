@@ -57,7 +57,7 @@ def _format_chapter_to_xhtml(raw_content: str, chapter_title: str) -> str:
         # Strip scripts, styles, iframes, and comments
         for bad in soup.find_all(["script", "style", "iframe", "noscript"]):
             bad.decompose()
-        for comm in soup.find_all(text=lambda t: isinstance(t, Comment)):
+        for comm in soup.find_all(string=lambda t: isinstance(t, Comment)):
             comm.extract()
 
         ALLOWED_TAGS = {

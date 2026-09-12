@@ -260,7 +260,7 @@ class DownloadEngine:
         logger.info("Download engine: graceful shutdown requested")
         self._stop_event.set()
         if self._worker_thread and self._worker_thread.is_alive():
-            self._worker_thread.join(timeout=120)
+            self._worker_thread.join(timeout=5)
 
     # ── Internal ──────────────────────────────
     def _ensure_running(self) -> None:
@@ -335,7 +335,15 @@ class DownloadEngine:
                 job.current_chapter = ch_info.title or f"Chapter {ch_info.chapter_number}"
                 content = job.scraper.get_chapter_content(ch_info.url)
                 if not content or not content.strip():
-                    raise ValueError(f"Empty content received for chapter {ch_info.chapter_number}")
+                    logger.info(
+                        "Chapter %d was empty or removed on source (%s) — using placeholder",
+                        ch_info.chapter_number,
+                        ch_info.url,
+                    )
+                    content = (
+                        "<p><em>[This chapter was published empty or removed by the author"
+                        " on the source platform.]</em></p>"
+                    )
                 word_count = len(content.split())
 
                 # Save to DB immediately after each chapter (crash-safe single transaction)

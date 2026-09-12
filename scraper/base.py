@@ -134,7 +134,7 @@ class BaseScraper(ABC):
             bad.decompose()
 
         # Remove comments
-        for comment in soup.find_all(text=lambda t: isinstance(t, Comment)):
+        for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
             comment.extract()
 
         ALLOWED_TAGS = {

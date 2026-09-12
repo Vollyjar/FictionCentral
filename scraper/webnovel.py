@@ -962,7 +962,7 @@ class WebnovelScraper(BaseScraper):
             raise ValueError(f"Chapter is locked behind paywall / requires coins: {url}")
 
         if not content.strip():
-            raise ValueError(f"Empty chapter content retrieved from {url}")
+            return "<p><em>[This chapter was published empty or removed by the author on Webnovel.]</em></p>"
 
         return content.strip()
 
