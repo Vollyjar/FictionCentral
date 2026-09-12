@@ -42,7 +42,7 @@ FictionCentral supports search and direct URL parsing across:
 ## Getting Started
 
 ### Option 1: Standalone Executable (Windows)
-1. Download the latest `FictionCentral-v1.0.0-windows-x64.zip` from [Releases](https://github.com/Vollyjar/FictionCentral/releases).
+1. Download the latest `FictionCentral-v1.1.0-windows-x64.zip` from [Releases](https://github.com/Vollyjar/FictionCentral/releases).
 2. Extract the zip anywhere on your computer.
 3. Run `FictionCentral.exe`. (No Python installation required)
 

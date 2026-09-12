@@ -8,7 +8,7 @@ import pathlib
 # Paths
 # ──────────────────────────────────────────────
 APP_NAME = "FictionCentral"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 _default_dir = pathlib.Path.home() / "AppData" / "Local" / "FictionCentral"
 _legacy_dir = pathlib.Path.home() / "AppData" / "Local" / "WebNovelScraper"
